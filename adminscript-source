@@ -1,0 +1,220 @@
+-- i have to write comments because im new to coding and i cant really find the things that does what i want
+-- before i do that:
+-- © 2026 nekikoreSource. All Rights Reserved.
+local Players = game:GetService('Players')
+local Player = Players.LocalPlayer
+local TextChatService = game:GetService('TextChatService')
+local StarterGui = game:GetService("StarterGui")
+local godmodeEnabled = false
+local FlyActive = false
+local RunService = game:GetService('RunService')
+local noclipEnabled = false
+local noclipconnection
+local noclipParts = {}
+--needed in commands (do not copy)
+local espEnabled = false
+local espConnections = {}
+local commands = {}
+local function makeCMD(name, alias, callback) -- make sure it isnt function(makecmd())
+    local command = Instance.new('TextChatCommand')
+    command.Name = name
+    command.PrimaryAlias = alias
+    command.Triggered:Connect(callback)
+    table.insert(commands, command)
+    command.Parent = TextChatService
+end
+
+local function SendNotification(title, text)
+    StarterGui:SetCore('SendNotification', { -- ooh setcore new!!
+        Title = tostring(title),
+        Text = tostring(text)
+    })
+end
+
+local function addName(player)
+    local function OnChar(character)
+        local head = character:WaitForChild('Head')
+        local billboard1 = Instance.new('BillboardGui') -- billboard for NameEsp (so i dont forget ofc)
+        billboard1.Name = "NT"
+        billboard1.Adornee = head
+        billboard1.StudsOffset = Vector3.new(0, 2, 0) -- this is studs so its not 0.2
+        billboard1.Size = UDim2.fromOffset(200, 50) -- btw for anyone wondering 1 is full screen
+        billboard1.AlwaysOnTop = true -- "true", "false" aren't strings.
+        billboard1.Parent = head
+
+        local label = Instance.new('TextLabel')
+        label.Size = UDim2.fromScale(1, 1)
+        label.Text = player.Name
+        label.BackgroundTransparency = 1 -- hide background
+        label.TextColor3 = Color3.fromRGB(255, 255, 255) -- white text
+        label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0) -- black stroke
+        label.TextStrokeTransparency = 0 -- fully visible
+        label.TextScaled = true -- my friend told me to do this idk what this does pls tell me
+        label.Parent = billboard1
+    end
+
+    if player.Character then
+        OnChar(player.Character)
+    end
+    table.insert(espConnections, player.CharacterAdded:Connect(OnChar))
+end
+
+-- main code (do not copy)
+local TP = Instance.new('TextChatCommand')
+TP.Name = 'TP'
+TP.PrimaryAlias = "/tp"
+TP.Parent = TextChatService
+table.insert(commands, TP)
+TP.Triggered:Connect(function(OriginTextSource, UnFilteredText)
+    local target = UnFilteredText:sub(5)
+    local Target = Players:FindFirstChild(target)
+
+    if not Target or not Target.Character then
+        SendNotification('error', 'player not found')
+        return
+    end
+
+    local root = Player.Character:WaitForChild('HumanoidRootPart')
+    local targetRoot = Target.Character:WaitForChild("HumanoidRootPart")
+    root.CFrame = targetRoot.CFrame
+end)
+
+makeCMD('nameesp', '/nameesp', function(source, text)
+    if espEnabled == true then
+        SendNotification('error', 'you already have ESP enabled.')
+    else
+        espEnabled = true
+        for _, player in Players:GetPlayers() do
+            addName(player)
+        end
+        table.insert(espConnections, Players.PlayerAdded:Connect(addName))
+    end
+end)
+
+makeCMD('unnameesp', '/unnameesp', function(source, text)
+    if not espEnabled then
+        SendNotification('error', 'you have nameESP disabled. /nameesp to turn it on.')
+    else
+        espEnabled = false
+
+        for _, connection in espConnections do
+            connection:Disconnect()
+        end
+        table.clear(espConnections)
+
+        for _, player in Players:GetPlayers() do
+            if player.Character then
+                local tag = player.Character:FindFirstChild('NT', true)
+                if tag then
+                    tag:Destroy()
+                end
+            end
+        end
+    end
+end)
+makeCMD("godmode","/godmode", function(source, text)
+    if godmodeEnabled == true then
+        SendNotification('error','godmode already enabled, you have to disable and re-enable it if you respawned.')
+    else
+        godmodeEnabled = true
+        SendNotification('be careful!', 'this godmode does not work in most of the games, but some games it works.')
+        local humanoid = Player.Character:WaitForChild("Humanoid")
+        humanoid.MaxHealth = 9999999999999999999999999999999999
+        humanoid.Health = 9999999999999999999999999999999999
+    end
+end)
+makeCMD("Checkhealth", "/checkhealth", function(source, text)
+    local humanoid = Player.Character:WaitForChild("Humanoid")
+    SendNotification('health', humanoid.Health)
+end)
+makeCMD("ungodmode", "/ungodmode", function(source, text)
+    if not godmodeEnabled then
+        SendNotification('error','godmode already off')
+    else
+        godmodeEnabled = false
+        local humanoid = Player.Character:WaitForChild("Humanoid")
+        SendNotification('turned off godmode', 'godmode off')
+        humanoid.MaxHealth = 100
+        humanoid.Health = 100
+    end
+end)
+makeCMD('noclip', '/noclip', function(source, text)
+    if noclipEnabled then
+        SendNotification('error', 'noclip already active')
+    else
+        SendNotification('noclip', 'noclip is now on.')
+        noclipEnabled = true
+        noclipconnection = RunService.Stepped:Connect(function()
+            local character = Player.Character
+            if character then
+                for _,part in character:GetDescendants() do
+                    if part:IsA('BasePart') then
+                        if noclipParts[part] == nil then
+                            noclipParts[part] = part.CanCollide
+                        end
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end
+end)
+makeCMD('unnoclip', '/unnoclip', function(source, text)
+    if noclipEnabled == false then
+        SendNotification('error','noclip already off.')
+    else
+        noclipEnabled = false
+        noclipconnection:Disconnect()
+        for part, original in noclipParts do
+            if part.Parent then
+                part.CanCollide = original
+            end
+        end
+        table.clear(noclipParts)
+    end
+end)
+makeCMD('unload', '/unload', function(source, text)
+    for _, connection in espConnections do
+        connection:Disconnect()
+    end
+    table.clear(espConnections)
+    for _, player in Players:GetPlayers() do
+        if player.Character then
+            local tag = player.Character:FindFirstChild('NT', true)
+            if tag then
+                tag:Destroy()
+            end
+        end
+    end
+    espEnabled = false
+
+    if noclipEnabled then
+        noclipconnection:Disconnect()
+        for part, original in noclipParts do
+            if part.Parent then
+                part.CanCollide = original
+            end
+        end
+        table.clear(noclipParts)
+        noclipEnabled = false
+    end
+
+    if godmodeEnabled then
+        local humanoid = Player.Character and Player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.MaxHealth = 100
+            humanoid.Health = 100
+        end
+        godmodeEnabled = false
+    end
+
+    SendNotification('destroying [1/3]', 'command tables removed, all commands disabled')
+
+    for _, command in commands do
+        command:Destroy()
+        SendNotification('destroying [2/3]', 'clearing commands')
+    end
+    table.clear(commands)
+    SendNotification('destroying[3/3]', 'clearing commands table..')
+    SendNotification('DONE [COMPLETE]', 'completely destroyed the script')
+end)
