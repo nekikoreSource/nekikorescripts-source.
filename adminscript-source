@@ -186,7 +186,7 @@ makeCMD('notification', '/notify', function(source, text)
 end)
 makeCMD('reset', '/die', function(source, text)
     SendNotification('may not work', 'in some games.')
-    Player.Humanoid.Health = 0
+    game.Players.LocalPlayer.Character.Humanoid.Health = 0
 end)
 makeCMD('exit', '/quit', function(source, text)
     Player:Kick('quitted the game')
