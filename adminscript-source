@@ -1,6 +1,6 @@
 -- i have to write comments because im new to coding and i cant really find the things that does what i want
--- before i do that:
--- © 2026 nekikoreSource. All Rights Reserved.
+-- all the things (do not copy)
+-- © 2026 nekikoreSource. All rights reserved.
 local Players = game:GetService('Players')
 local Player = Players.LocalPlayer
 local TextChatService = game:GetService('TextChatService')
@@ -11,16 +11,24 @@ local RunService = game:GetService('RunService')
 local noclipEnabled = false
 local noclipconnection
 local noclipParts = {}
+local cmds = 1
 --needed in commands (do not copy)
+local function SendNotification(title, text)
+    StarterGui:SetCore('SendNotification', { -- ooh setcore new!!
+        Title = tostring(title),
+        Text = tostring(text)
+    })
+end
 local espEnabled = false
 local espConnections = {}
 local commands = {}
 local function makeCMD(name, alias, callback) -- make sure it isnt function(makecmd())
     local command = Instance.new('TextChatCommand')
+    SendNotification('LOADED COMMAND:', alias)
+    cmds = cmds + 1
     command.Name = name
     command.PrimaryAlias = alias
     command.Triggered:Connect(callback)
-    table.insert(commands, command)
     command.Parent = TextChatService
 end
 
@@ -173,48 +181,22 @@ makeCMD('unnoclip', '/unnoclip', function(source, text)
         table.clear(noclipParts)
     end
 end)
-makeCMD('unload', '/unload', function(source, text)
-    for _, connection in espConnections do
-        connection:Disconnect()
-    end
-    table.clear(espConnections)
-    for _, player in Players:GetPlayers() do
-        if player.Character then
-            local tag = player.Character:FindFirstChild('NT', true)
-            if tag then
-                tag:Destroy()
-            end
-        end
-    end
-    espEnabled = false
-
-    if noclipEnabled then
-        noclipconnection:Disconnect()
-        for part, original in noclipParts do
-            if part.Parent then
-                part.CanCollide = original
-            end
-        end
-        table.clear(noclipParts)
-        noclipEnabled = false
-    end
-
-    if godmodeEnabled then
-        local humanoid = Player.Character and Player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.MaxHealth = 100
-            humanoid.Health = 100
-        end
-        godmodeEnabled = false
-    end
-
-    SendNotification('destroying [1/3]', 'command tables removed, all commands disabled')
-
-    for _, command in commands do
-        command:Destroy()
-        SendNotification('destroying [2/3]', 'clearing commands')
-    end
-    table.clear(commands)
-    SendNotification('destroying[3/3]', 'clearing commands table..')
-    SendNotification('DONE [COMPLETE]', 'completely destroyed the script')
+makeCMD('notification', '/notify', function(source, text)
+    SendNotification('you said:', text:sub(8))
+end)
+makeCMD('reset', '/die', function(source, text)
+    SendNotification('may not work', 'in some games.')
+    Player.Humanoid.Health = 0
+end)
+makeCMD('exit', '/quit', function(source, text)
+    Player:Kick('quitted the game')
+end)
+makeCMD('walkspeed', '/walkspeed', function(source, text) -- this took like solid 1 hour because i didnt know how to modify walkspeed and had to search devforums :C
+    Player.Character.Humanoid.WalkSpeed = text:sub(12)
+end)
+makeCMD('jumppower', '/jumppower', function(source, text) -- took like solid 20 minutes of trying to fix it but i remembered dead rails blocked jumppower change..
+    Player.Character.Humanoid.JumpPower = text:sub(12)
+end)
+makeCMD('commands', '/amountofcommands', function(source, text)
+    SendNotification('commands amount right now:', cmds)
 end)
