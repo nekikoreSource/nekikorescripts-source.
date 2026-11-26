@@ -12,6 +12,8 @@ local noclipEnabled = false
 local noclipconnection
 local noclipParts = {}
 local cmds = 1
+local root = Player.Character.HumanoidRootPart
+local freezeenabled = false
 --needed in commands (do not copy)
 local function SendNotification(title, text)
     StarterGui:SetCore('SendNotification', { -- ooh setcore new!!
@@ -199,4 +201,29 @@ makeCMD('jumppower', '/jumppower', function(source, text) -- took like solid 20 
 end)
 makeCMD('commands', '/amountofcommands', function(source, text)
     SendNotification('commands amount right now:', cmds)
+end)
+makeCMD('freeze', '/freeze', function(source, text)
+    if freezeenabled then
+        SendNotification('freeze already on', 'frreeze already on bro')
+    else
+        local currentpos = root.GetPivot
+        freezeenabled = true
+        local freezepart = Instance.new('Part')
+        freezepart.Position = root.Position
+        freezepart.Transparency = 1
+        freezepart.CanTouch = false
+        while freezeenabled == true do
+            root.CFrame = freezepart.CFrame
+            wait(0.01)
+        end
+    end
+end)
+makeCMD('disablefreeze', '/unfreeze', function(source, text)
+    freezeenabled = false
+    freezepart:Destroy()
+end)
+makeCMD('executelua', '/executelua', function(source, text)
+    local target_script = text:sub(13)
+    local execute = Instance.new('LocalScript')
+    execute.Source = [[target_script]]
 end)
