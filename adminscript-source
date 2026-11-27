@@ -2,6 +2,7 @@
 -- all the things (do not copy)
 -- © 2026 nekikoreSource. All rights reserved.
 local Players = game:GetService('Players')
+local infjumpenabled = false
 local Player = Players.LocalPlayer
 local TextChatService = game:GetService('TextChatService')
 local StarterGui = game:GetService("StarterGui")
@@ -11,10 +12,15 @@ local RunService = game:GetService('RunService')
 local noclipEnabled = false
 local noclipconnection
 local noclipParts = {}
+local commandalias = {}
 local cmds = 1
 local root = Player.Character.HumanoidRootPart
 local freezeenabled = false
+local flyenabled = false
+local UserInputService = game:GetService('UserInputService')
 --needed in commands (do not copy)
+
+
 local function SendNotification(title, text)
     StarterGui:SetCore('SendNotification', { -- ooh setcore new!!
         Title = tostring(title),
@@ -28,10 +34,15 @@ local function makeCMD(name, alias, callback) -- make sure it isnt function(make
     local command = Instance.new('TextChatCommand')
     SendNotification('LOADED COMMAND:', alias)
     cmds = cmds + 1
+    table.insert(commandalias, alias)
     command.Name = name
     command.PrimaryAlias = alias
-    command.Triggered:Connect(callback)
-    command.Parent = TextChatService
+    Player.Chatted:Connect(function(chatted)
+        if chatted == alias then
+            callback()
+            SendNotification('commandManager', 'used command (' ..alias ..')')
+        end
+    end)
 end
 
 local function SendNotification(title, text)
@@ -226,4 +237,81 @@ makeCMD('executelua', '/executelua', function(source, text)
     local target_script = text:sub(13)
     local execute = Instance.new('LocalScript')
     execute.Source = [[target_script]]
+end)
+makeCMD('crash', '/crash', function(source, text)
+    while true do
+    print('crasher')
+    end
+end)
+makeCMD('Tp2coords', '/TpUsingVector3', function(source, text)
+    local coords = text:sub(12)
+    local tpbrick = Instance.new('Part')
+    tpbrick.Position = Vector3.new(coords)
+    tpbrick.CanCollide = false
+    Player.Character.HumanoidRootPart.CFrame = tpbrick.CFrame
+    tpbrick:Destroy()
+end)
+local infoGui
+makeCMD('infoui', '/infoui', function()
+    if infoGui then
+        SendNotification('error', 'ui already open')
+        return
+    end
+
+    infoGui = Instance.new('ScreenGui')
+    infoGui.Name = 'InfoGui'
+    infoGui.ResetOnSpawn = false
+    infoGui.Parent = Player:WaitForChild('PlayerGui')
+
+    local frame = Instance.new('Frame')
+    frame.Size = UDim2.fromOffset(300, 350)
+    frame.Position = UDim2.fromScale(0.5, 0.5)
+    frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.Parent = infoGui
+
+    local title = Instance.new('TextLabel')
+    title.Size = UDim2.new(1, 0, 0, 35)
+    title.BackgroundTransparency = 1
+    title.Text = 'Commands'
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Font = Enum.Font.Code
+    title.TextSize = 22
+    title.Parent = frame
+
+    local scroll = Instance.new('ScrollingFrame')
+    scroll.Size = UDim2.new(1, -20, 1, -50)
+    scroll.Position = UDim2.fromOffset(10, 40)
+    scroll.BackgroundTransparency = 1
+    scroll.ScrollBarThickness = 6
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    scroll.Parent = frame
+
+    local layout = Instance.new('UIListLayout')
+    layout.Padding = UDim.new(0, 4)
+    layout.Parent = scroll
+
+    for _, alias in commandalias do
+        local label = Instance.new('TextLabel')
+        label.Size = UDim2.new(1, -10, 0, 24)
+        label.BackgroundTransparency = 1
+        label.Text = alias
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Font = Enum.Font.Code
+        label.TextSize = 18
+        label.Parent = scroll
+    end
+
+    SendNotification('info ui', 'hello. close this ui by saying "disableui" in the chat.')
+end)
+
+makeCMD('disableui', 'disableui', function()
+    if infoGui then
+        infoGui:Destroy()
+        infoGui = nil
+    else
+        SendNotification('error', 'no ui is open')
+    end
 end)
