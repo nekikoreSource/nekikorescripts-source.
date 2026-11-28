@@ -1,6 +1,7 @@
 -- i have to write comments because im new to coding and i cant really find the things that does what i want
 -- all the things (do not copy)
 -- © 2026 nekikoreSource. All rights reserved.
+
 local Players = game:GetService('Players')
 local infjumpenabled = false
 local Player = Players.LocalPlayer
@@ -34,7 +35,7 @@ local espEnabled = false
 local espConnections = {}
 local commands = {}
 local function makeCMD(name, alias, callback) -- make sure it isnt function(makecmd())
-    SendNotification('LOADED COMMAND:', alias, 0.1)
+    SendNotification('LOADED COMMAND:', alias, 0.01)
     cmds = cmds + 1
     table.insert(commandalias, alias)
     Player.Chatted:Connect(function(chatted)
@@ -336,3 +337,6 @@ makeCMD('disableui', '/disableui', function()
         SendNotification('error', 'no ui is open')
     end
 end)
+local scriptver = 'v4.2'
+SendNotification('loader', "loaded neki's admin " ..scriptver .." !")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/nekikoreSource/nekikorescripts-source./refs/heads/main/adminscriptlatestalert.luau"))()
