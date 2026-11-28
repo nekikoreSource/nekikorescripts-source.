@@ -1,1 +1,0 @@
-latestScriptVersion = 'v4.2'
