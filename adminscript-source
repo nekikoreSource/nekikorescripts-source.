@@ -337,6 +337,5 @@ makeCMD('disableui', '/disableui', function()
         SendNotification('error', 'no ui is open')
     end
 end)
-local scriptver = 'v5.0'
+local scriptver = 'v4.2'
 SendNotification('loader', "loaded neki's admin " ..scriptver .." !")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/nekikoreSource/nekikorescripts-source./refs/heads/main/adminscriptlatestalert.luau"))()
