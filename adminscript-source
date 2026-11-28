@@ -1,8 +1,8 @@
 -- i have to write comments because im new to coding and i cant really find the things that does what i want
 -- all the things (do not copy)
 -- © 2026 nekikoreSource. All rights reserved.
-
 local Players = game:GetService('Players')
+local banned1 = '\''
 local infjumpenabled = false
 local Player = Players.LocalPlayer
 local TextChatService = game:GetService('TextChatService')
@@ -20,7 +20,7 @@ local freezeenabled = false
 local freezepart
 local flyenabled = false
 local UserInputService = game:GetService('UserInputService')
-local prefix = ''
+local prefix = '/'
 --needed in commands (do not copy)
 
 
@@ -31,6 +31,13 @@ local function SendNotification(title, text, dur)
         Duration = tonumber(dur)
     })
 end
+status = isfile("nekis_admin/prefix/savedprefix.txt")
+if status == true then
+    prefix = readfile("nekis_admin/prefix/savedprefix.txt")
+else
+    writefile('nekis_admin/prefix/savedprefix.txt', '/')
+    prefix = '/'
+end
 local espEnabled = false
 local espConnections = {}
 local commands = {}
@@ -39,14 +46,27 @@ local function makeCMD(name, alias, callback) -- make sure it isnt function(make
     cmds = cmds + 1
     table.insert(commandalias, alias)
     Player.Chatted:Connect(function(chatted)
-        local a = string.len(alias)
-        if chatted:sub(1, a) == alias then
-            SendNotification('commandManager', 'used command (' ..alias ..')')
-            callback(Player, chatted)
+        local a = string.len(alias) + 1
+        if chatted:sub(2, a) == alias then
+            if chatted:sub(1, 1) == prefix then
+                SendNotification('commandManager', 'used command (' ..alias ..')')
+                callback(Player, chatted:sub(2))
+            end
         end
     end)
 end
-
+local function makeCMDprimary(name, alias, callback)
+    SendNotification('LOADED COMMAND:', alias, 0.01)
+    cmds = cmds + 1
+    table.insert(commandalias, alias)
+    Player.Chatted:Connect(function(chatted)
+    aliaslen = string.len(tostring(alias))
+        if chatted:sub(1, aliaslen) == alias then
+            callback(Player, chatted)
+            SendNotification('commandManager', 'used command (' ..alias ..')')
+        end
+    end)
+end
 local function addName(player)
     local function OnChar(character)
         local head = character:WaitForChild('Head')
@@ -78,7 +98,7 @@ end
 -- main code (do not copy)
 local TP = Instance.new('TextChatCommand')
 TP.Name = 'TP'
-TP.PrimaryAlias = "/tp"
+TP.PrimaryAlias = "tp"
 TP.Parent = TextChatService
 table.insert(commands, TP)
 TP.Triggered:Connect(function(OriginTextSource, UnFilteredText)
@@ -95,7 +115,7 @@ TP.Triggered:Connect(function(OriginTextSource, UnFilteredText)
     root.CFrame = targetRoot.CFrame
 end)
 
-makeCMD('nameesp', '/nameesp', function(source, text)
+makeCMD('nameesp', 'nameesp', function(source, text)
     if espEnabled == true then
         SendNotification('error', 'you already have ESP enabled.')
     else
@@ -107,7 +127,7 @@ makeCMD('nameesp', '/nameesp', function(source, text)
     end
 end)
 
-makeCMD('unnameesp', '/unnameesp', function(source, text)
+makeCMD('unnameesp', 'unnameesp', function(source, text)
     if not espEnabled then
         SendNotification('error', 'you have nameESP disabled. /nameesp to turn it on.')
     else
@@ -128,7 +148,7 @@ makeCMD('unnameesp', '/unnameesp', function(source, text)
         end
     end
 end)
-makeCMD("godmode","/godmode", function(source, text)
+makeCMD("godmode","godmode", function(source, text)
     if godmodeEnabled == true then
         SendNotification('error','godmode already enabled, you have to disable and re-enable it if you respawned.')
     else
@@ -139,11 +159,11 @@ makeCMD("godmode","/godmode", function(source, text)
         humanoid.Health = 9999999999999999999999999999999999
     end
 end)
-makeCMD("Checkhealth", "/checkhealth", function(source, text)
+makeCMD("Checkhealth", "checkhealth", function(source, text)
     local humanoid = Player.Character:WaitForChild("Humanoid")
     SendNotification('health', humanoid.Health)
 end)
-makeCMD("ungodmode", "/ungodmode", function(source, text)
+makeCMD("ungodmode", "ungodmode", function(source, text)
     if not godmodeEnabled then
         SendNotification('error','godmode already off')
     else
@@ -154,7 +174,7 @@ makeCMD("ungodmode", "/ungodmode", function(source, text)
         humanoid.Health = 100
     end
 end)
-makeCMD('noclip', '/noclip', function(source, text)
+makeCMD('noclip', 'noclip', function(source, text)
     if noclipEnabled then
         SendNotification('error', 'noclip already active')
     else
@@ -175,7 +195,7 @@ makeCMD('noclip', '/noclip', function(source, text)
         end)
     end
 end)
-makeCMD('unnoclip', '/unnoclip', function(source, text)
+makeCMD('unnoclip', 'unnoclip', function(source, text)
     if noclipEnabled == false then
         SendNotification('error','noclip already off.')
     else
@@ -189,26 +209,26 @@ makeCMD('unnoclip', '/unnoclip', function(source, text)
         table.clear(noclipParts)
     end
 end)
-makeCMD('notification', '/notify', function(source, text)
-    SendNotification('you said:', text:sub(9))
+makeCMD('notification', 'notify', function(source, text)
+    SendNotification('you said:', text:sub(8))
 end)
-makeCMD('reset', '/die', function(source, text)
+makeCMD('reset', 'die', function(source, text)
     SendNotification('may not work', 'in some games.')
     game.Players.LocalPlayer.Character.Humanoid.Health = 0
 end)
-makeCMD('exit', '/quit', function(source, text)
+makeCMD('exit', 'quit', function(source, text)
     Player:Kick('quitted the game')
 end)
-makeCMD('walkspeed', '/walkspeed', function(source, text) -- this took like solid 1 hour because i didnt know how to modify walkspeed and had to search devforums :C
-    local speed = tonumber(text:sub(12))
+makeCMD('walkspeed', 'walkspeed', function(source, text) -- this took like solid 1 hour because i didnt know how to modify walkspeed and had to search devforums :C
+    local speed = tonumber(text:sub(11))
     if not speed then
         SendNotification('error', 'use /walkspeed <number>')
         return
     end
     Player.Character.Humanoid.WalkSpeed = speed
 end)
-makeCMD('jumppower', '/jumppower', function(source, text) -- took like solid 20 minutes of trying to fix it but i remembered dead rails blocked jumppower change..
-    local power = tonumber(text:sub(12))
+makeCMD('jumppower', 'jumppower', function(source, text) -- took like solid 20 minutes of trying to fix it but i remembered dead rails blocked jumppower change..
+    local power = tonumber(text:sub(11))
     if not power then
         SendNotification('error', 'use /jumppower <number>')
         return
@@ -216,10 +236,10 @@ makeCMD('jumppower', '/jumppower', function(source, text) -- took like solid 20 
     Player.Character.Humanoid.UseJumpPower = true
     Player.Character.Humanoid.JumpPower = power
 end)
-makeCMD('commands', '/amountofcommands', function(source, text)
+makeCMD('commands', 'amountofcommands', function(source, text)
     SendNotification('commands amount right now:', cmds)
 end)
-makeCMD('freeze', '/freeze', function(source, text)
+makeCMD('freeze', 'freeze', function(source, text)
     if freezeenabled then
         SendNotification('freeze already on', 'frreeze already on bro')
     else
@@ -235,15 +255,15 @@ makeCMD('freeze', '/freeze', function(source, text)
         end
     end
 end)
-makeCMD('disablefreeze', '/unfreeze', function(source, text)
+makeCMD('disablefreeze', 'unfreeze', function(source, text)
     freezeenabled = false
     if freezepart then
         freezepart:Destroy()
         freezepart = nil
     end
 end)
-makeCMD('executelua', '/executelua', function(source, text)
-    local target_script = text:sub(13)
+makeCMD('executelua', 'executelua', function(source, text)
+    local target_script = text:sub(12)
     local ok, err = pcall(function()
         local fn, compileError = loadstring(target_script)
         if not fn then
@@ -255,16 +275,16 @@ makeCMD('executelua', '/executelua', function(source, text)
         SendNotification('error', err)
     end
 end)
-makeCMD('crash', '/crash', function(source, text)
+makeCMD('crash', 'crash', function(source, text)
     while true do
     print('crasher')
     end
 end)
-makeCMD('Tp2coords', '/TpUsingVector3', function(source, text)
-    local coords = text:sub(17):split(' ')
+makeCMD('Tp2coords', 'TpUsingVector3', function(source, text)
+    local coords = text:sub(16):split(' ')
     local x, y, z = tonumber(coords[1]), tonumber(coords[2]), tonumber(coords[3])
     if not (x and y and z) then
-        SendNotification('error', 'use /TpUsingVector3 x y z')
+        SendNotification('error', 'use command TpUsingVector3 x y z')
         return
     end
     local tpbrick = Instance.new('Part')
@@ -274,7 +294,7 @@ makeCMD('Tp2coords', '/TpUsingVector3', function(source, text)
     tpbrick:Destroy()
 end)
 local infoGui
-makeCMD('infoui', '/infoui', function()
+makeCMD('infoui', 'infoui', function()
     if infoGui then
         SendNotification('error', 'ui already open')
         return
@@ -329,7 +349,7 @@ makeCMD('infoui', '/infoui', function()
     SendNotification('info ui', 'hello. close this ui by saying "/disableui" in the chat.')
 end)
 
-makeCMD('disableui', '/disableui', function()
+makeCMD('disableui', 'disableui', function()
     if infoGui then
         infoGui:Destroy()
         infoGui = nil
@@ -337,5 +357,28 @@ makeCMD('disableui', '/disableui', function()
         SendNotification('error', 'no ui is open')
     end
 end)
-local scriptver = 'v4.2'
+makeCMDprimary('prefix', '!prefix', function(source, text)
+    if string.len(tostring(text:sub(9, 9))) == 0 then
+        SendNotification('error', 'prefix cannot be 0 letters.')
+    elseif text:sub(9, 9) == " " then
+        SendNotification('error', 'you cannot use those characters in a prefix.')
+    else
+        prefix = text:sub(9, 9)
+        SendNotification('prefix', 'prefix is now:' ..prefix)
+    end
+end)
+makeCMDprimary('saveprefix', '!saveprefix', function(source, text)
+    if text:sub(13, 13) == " " then
+        SendNotification('nope', 'cannot use those characters as a prefix.')
+    elseif string.len(tostring(text:sub(13, 13))) == 0 then
+        SendNotification('nope', 'cannot use empty as a prefix.')
+    else
+        writefile('nekis_admin/prefix/savedprefix.txt', text:sub(13, 13))
+        SendNotification('yes', 'saved as ' ..text:sub(13, 13))
+    end
+end)
+
+
+local scriptver = 'v6.0'
 SendNotification('loader', "loaded neki's admin " ..scriptver .." !")
+SendNotification('loader', 'Your Saved prefix is: ' ..prefix)
