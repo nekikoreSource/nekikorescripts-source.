@@ -14,42 +14,36 @@ local noclipconnection
 local noclipParts = {}
 local commandalias = {}
 local cmds = 1
-local root = Player.Character.HumanoidRootPart
+local root = (Player.Character or Player.CharacterAdded:Wait()):WaitForChild('HumanoidRootPart')
 local freezeenabled = false
+local freezepart
 local flyenabled = false
 local UserInputService = game:GetService('UserInputService')
+local prefix = ''
 --needed in commands (do not copy)
 
 
-local function SendNotification(title, text)
+local function SendNotification(title, text, dur)
     StarterGui:SetCore('SendNotification', { -- ooh setcore new!!
         Title = tostring(title),
-        Text = tostring(text)
+        Text = tostring(text),
+        Duration = tonumber(dur)
     })
 end
 local espEnabled = false
 local espConnections = {}
 local commands = {}
 local function makeCMD(name, alias, callback) -- make sure it isnt function(makecmd())
-    local command = Instance.new('TextChatCommand')
-    SendNotification('LOADED COMMAND:', alias)
+    SendNotification('LOADED COMMAND:', alias, 0.1)
     cmds = cmds + 1
     table.insert(commandalias, alias)
-    command.Name = name
-    command.PrimaryAlias = alias
     Player.Chatted:Connect(function(chatted)
-        if chatted == alias then
-            callback()
+        local a = string.len(alias)
+        if chatted:sub(1, a) == alias then
             SendNotification('commandManager', 'used command (' ..alias ..')')
+            callback(Player, chatted)
         end
     end)
-end
-
-local function SendNotification(title, text)
-    StarterGui:SetCore('SendNotification', { -- ooh setcore new!!
-        Title = tostring(title),
-        Text = tostring(text)
-    })
 end
 
 local function addName(player)
@@ -195,7 +189,7 @@ makeCMD('unnoclip', '/unnoclip', function(source, text)
     end
 end)
 makeCMD('notification', '/notify', function(source, text)
-    SendNotification('you said:', text:sub(8))
+    SendNotification('you said:', text:sub(9))
 end)
 makeCMD('reset', '/die', function(source, text)
     SendNotification('may not work', 'in some games.')
@@ -205,10 +199,21 @@ makeCMD('exit', '/quit', function(source, text)
     Player:Kick('quitted the game')
 end)
 makeCMD('walkspeed', '/walkspeed', function(source, text) -- this took like solid 1 hour because i didnt know how to modify walkspeed and had to search devforums :C
-    Player.Character.Humanoid.WalkSpeed = text:sub(12)
+    local speed = tonumber(text:sub(12))
+    if not speed then
+        SendNotification('error', 'use /walkspeed <number>')
+        return
+    end
+    Player.Character.Humanoid.WalkSpeed = speed
 end)
 makeCMD('jumppower', '/jumppower', function(source, text) -- took like solid 20 minutes of trying to fix it but i remembered dead rails blocked jumppower change..
-    Player.Character.Humanoid.JumpPower = text:sub(12)
+    local power = tonumber(text:sub(12))
+    if not power then
+        SendNotification('error', 'use /jumppower <number>')
+        return
+    end
+    Player.Character.Humanoid.UseJumpPower = true
+    Player.Character.Humanoid.JumpPower = power
 end)
 makeCMD('commands', '/amountofcommands', function(source, text)
     SendNotification('commands amount right now:', cmds)
@@ -217,9 +222,9 @@ makeCMD('freeze', '/freeze', function(source, text)
     if freezeenabled then
         SendNotification('freeze already on', 'frreeze already on bro')
     else
-        local currentpos = root.GetPivot
+        root = Player.Character:WaitForChild('HumanoidRootPart')
         freezeenabled = true
-        local freezepart = Instance.new('Part')
+        freezepart = Instance.new('Part')
         freezepart.Position = root.Position
         freezepart.Transparency = 1
         freezepart.CanTouch = false
@@ -231,12 +236,23 @@ makeCMD('freeze', '/freeze', function(source, text)
 end)
 makeCMD('disablefreeze', '/unfreeze', function(source, text)
     freezeenabled = false
-    freezepart:Destroy()
+    if freezepart then
+        freezepart:Destroy()
+        freezepart = nil
+    end
 end)
 makeCMD('executelua', '/executelua', function(source, text)
     local target_script = text:sub(13)
-    local execute = Instance.new('LocalScript')
-    execute.Source = [[target_script]]
+    local ok, err = pcall(function()
+        local fn, compileError = loadstring(target_script)
+        if not fn then
+            error(compileError)
+        end
+        fn()
+    end)
+    if not ok then
+        SendNotification('error', err)
+    end
 end)
 makeCMD('crash', '/crash', function(source, text)
     while true do
@@ -244,9 +260,14 @@ makeCMD('crash', '/crash', function(source, text)
     end
 end)
 makeCMD('Tp2coords', '/TpUsingVector3', function(source, text)
-    local coords = text:sub(12)
+    local coords = text:sub(17):split(' ')
+    local x, y, z = tonumber(coords[1]), tonumber(coords[2]), tonumber(coords[3])
+    if not (x and y and z) then
+        SendNotification('error', 'use /TpUsingVector3 x y z')
+        return
+    end
     local tpbrick = Instance.new('Part')
-    tpbrick.Position = Vector3.new(coords)
+    tpbrick.Position = Vector3.new(x, y, z)
     tpbrick.CanCollide = false
     Player.Character.HumanoidRootPart.CFrame = tpbrick.CFrame
     tpbrick:Destroy()
@@ -304,10 +325,10 @@ makeCMD('infoui', '/infoui', function()
         label.Parent = scroll
     end
 
-    SendNotification('info ui', 'hello. close this ui by saying "disableui" in the chat.')
+    SendNotification('info ui', 'hello. close this ui by saying "/disableui" in the chat.')
 end)
 
-makeCMD('disableui', 'disableui', function()
+makeCMD('disableui', '/disableui', function()
     if infoGui then
         infoGui:Destroy()
         infoGui = nil
